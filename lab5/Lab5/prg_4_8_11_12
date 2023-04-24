@@ -1,0 +1,47 @@
+  .data
+   buffer: .space 20
+   str1:  .asciiz "Enter Name(max 20 chars): "
+   str2:  .asciiz "Enter(Y/N)  :\n" 
+   str3:  .asciiz "\nYour String is:\n"
+   str4:  .asciiz "Your answer is:\n"
+   .text
+   
+   
+ li $v0,4
+la $a0,str1
+syscall
+
+li $v0,8 #take in input
+la $a0, buffer 
+li $a1, 20 
+syscall
+move $t0, $a0 
+
+
+li $v0,4
+la $a0,str2
+syscall
+
+li $v0 ,12 
+syscall 
+move $t1 , $v0  
+
+
+li $v0,4
+la $a0,str3
+syscall
+
+li $v0 ,4 
+move $a0 , $t0
+syscall 
+
+li $v0,4
+la $a0,str4
+syscall
+
+li $v0 ,11
+move $a0 , $t1
+syscall 
+
+
+

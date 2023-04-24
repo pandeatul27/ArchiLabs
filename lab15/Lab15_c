@@ -1,0 +1,75 @@
+# Assume matrices A, B, and C are of size n x n
+# Assume the base addresses of matrices A, B, and C are in $s0, $s1, and $s2, respectively
+# Assume n is in $s3
+# Assume the block size is in $s4
+.data
+
+A: .word 1 2 3 4 5 6 7 8 9
+B: .word 1 0 0 0 1 0 0 0 1
+C: .word 0 0 0 0 0 0 0 0 0
+
+.text
+
+la $s0, A
+la $s1, B
+la $s2, C
+li $s3, 3
+
+    # Initialize loop counters
+    addi $t0, $zero, 0       # i = 0
+    addi $t1, $zero, 0       # j = 0
+    addi $t2, $zero, 0       # k = 0
+
+loop_i:
+    beq $t0, $s3, exit       # Exit loop when i == n
+    li $t6, 12
+    mult $t6, $t0
+    mflo $t6
+   
+    add $t7, $0, $t6
+    add $t6, $s0, $t6        # Calculate the starting address of row i of matrix A
+    add $t7, $s2, $t7        # Calculate the starting address of row i of matrix C
+    add $t1, $0, $0
+
+    loop_j:
+        beq $t1, $s3, next_j  # Exit inner loop when j == n
+        
+        sll $t8, $t1, 2
+        sll $t9, $t1, 2
+
+        add $t8, $s1, $t8    # Calculate the starting address of column j of matrix B
+        add $t9, $t7, $t9    # Calculate the address of C[i][j]
+
+        addi $t2, $zero, 0   # Reset k to 0
+
+    loop_k:
+        beq $t2, $s3, next_k  # Exit innermost loop when k == n
+       
+        sll $t3, $t2, 2
+
+        add $t3, $t6, $t3    # Calculate the address of A[i][k]
+        li $t4, 12
+        mult $t4, $t2      # Calculate the offset for B[k][j]
+        mflo $t4
+        add $t5, $t8, $t4    # Calculate the address of B[k][j]
+
+        lw $t3, 0($t3)        # Load A[i][k] into $t3
+        lw $t5, 0($t5)        # Load B[k][j] into $t5
+        mul $t3, $t3, $t5    # Multiply A[i][k] and B[k][j]
+        lw $t5, 0($t9)        # Load the current value of C[i][j]
+        add $t3, $t3, $t5    # Add the product to C[i][j]
+        sw $t3, 0($t9)        # Store the result in C[i][j]
+
+        addi $t2, $t2, 1     # Increment k
+        j loop_k             # Jump to beginning of innermost loop
+
+    next_k:
+        addi $t1, $t1, 1     # Increment j
+        j loop_j             # Jump to beginning of inner loop
+
+    next_j:
+        addi $t0, $t0, 1     # Increment i
+        j loop_i             # Jump to beginning of outer loop
+
+exit:
+    # Matrix multiplication is complete, result is stored in matrix C
